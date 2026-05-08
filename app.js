@@ -26,7 +26,7 @@ const App = {
     });
   },
 
-  async init() {
+async init() {
     await Session.ensureSession();
     await Documents.renderList();
     await Documents.refreshAnalysisSelect();
@@ -42,9 +42,10 @@ const App = {
   updateStep2Nav() {
     const select = document.getElementById('analysis-doc-select');
     const navBtn = document.getElementById('nav-analysis');
-    if (navBtn) {
-      navBtn.disabled = !select.value && select.options.length <= 1;
-    }
+    if (!navBtn) return;
+    const hasResume = select.options.length > 1;
+    navBtn.disabled = !hasResume;
+    navBtn.title = hasResume ? '' : 'STEP 01에서 이력서를 먼저 등록해주세요';
   },
 
   setupDragDrop() {
