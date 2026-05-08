@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JobFit — 취업 서류 도우미</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 배경 그래픽 -->
+  <div class="bg-mesh"></div>
+  <div class="bg-grid"></div>
+
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-mark">J</span>
+        <span class="logo-text">JobFit</span>
+      </div>
+      <nav class="step-nav">
+        <button class="step-btn active" data-step="documents" onclick="App.navigate('documents')">
+          <span class="step-num">01</span>
+          <span class="step-label">서류 도우미</span>
+        </button>
+        <div class="step-divider"></div>
+        <button class="step-btn" data-step="analysis" onclick="App.navigate('analysis')" id="nav-analysis">
+          <span class="step-num">02</span>
+          <span class="step-label">공고 분석</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 메인 컨텐츠 -->
+  <main class="main">
+
+    <!-- ===== STEP 1: 서류 도우미 ===== -->
+    <section class="page active" id="page-documents">
+      <div class="page-header">
+        <div class="page-tag">STEP 01</div>
+        <h1 class="page-title">서류 도우미</h1>
+        <p class="page-desc">이력서·포트폴리오를 업로드하면 AI가 분석해 맞춤 피드백을 드려요</p>
+      </div>
+
+      <div class="content-grid">
+        <!-- 왼쪽: 업로드 패널 -->
+        <div class="panel upload-panel">
+          <div class="panel-header">
+            <h2>서류 등록</h2>
+            <button class="btn-primary" onclick="DocumentModal.open()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              새 서류 등록
+            </button>
+          </div>
+
+          <!-- 탭 -->
+          <div class="doc-tabs">
+            <button class="doc-tab active" data-type="resume" onclick="Documents.switchTab('resume')">이력서</button>
+            <button class="doc-tab" data-type="portfolio" onclick="Documents.switchTab('portfolio')">포트폴리오</button>
+          </div>
+
+          <!-- 서류 목록 -->
+          <div class="doc-list" id="doc-list">
+            <div class="empty-state" id="doc-empty">
+              <div class="empty-icon">📄</div>
+              <p>등록된 서류가 없어요</p>
+              <span>위 버튼을 눌러 서류를 등록해보세요</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 분석 결과 패널 -->
+        <div class="panel result-panel" id="result-panel">
+          <div class="result-empty" id="result-empty">
+            <div class="result-empty-icon">✦</div>
+            <p>서류를 선택하고 분석을 시작하세요</p>
+            <span>AI가 항목별로 피드백을 드려요</span>
+          </div>
+          <div class="result-content hidden" id="result-content">
+            <!-- 분석 결과가 동적으로 삽입됨 -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== STEP 2: 공고 분석 ===== -->
+    <section class="page" id="page-analysis">
+      <div class="page-header">
+        <div class="page-tag">STEP 02</div>
+        <h1 class="page-title">공고 분석</h1>
+        <p class="page-desc">채용 공고와 내 서류를 비교해 합격 가능성을 분석해드려요</p>
+      </div>
+
+      <div class="content-grid analysis-grid">
+        <!-- 왼쪽: 입력 패널 -->
+        <div class="panel input-panel">
+          <div class="panel-header">
+            <h2>분석 정보 입력</h2>
+          </div>
+
+          <!-- 서류 선택 -->
+          <div class="form-section">
+            <label class="form-label required">비교할 이력서 선택</label>
+            <select class="form-select" id="analysis-doc-select">
+              <option value="">이력서를 먼저 등록해주세요</option>
+            </select>
+          </div>
+
+          <!-- 채용 공고 -->
+          <div class="form-section">
+            <label class="form-label required">채용 공고</label>
+            <div class="input-toggle">
+              <button class="toggle-btn active" data-mode="url" onclick="PostingInput.switchMode('url')">URL 입력</button>
+              <button class="toggle-btn" data-mode="text" onclick="PostingInput.switchMode('text')">직접 입력</button>
+            </div>
+            <div id="posting-url-input">
+              <input type="url" class="form-input" id="posting-url" placeholder="https://www.wanted.co.kr/..." />
+              <p class="input-hint">원티드, 사람인, 리멤버, 링크드인 등 지원</p>
+            </div>
+            <div id="posting-text-input" class="hidden">
+              <textarea class="form-textarea" id="posting-text" rows="8" placeholder="채용 공고 내용을 여기에 붙여넣으세요..."></textarea>
+            </div>
+          </div>
+
+          <!-- 회사 정보 (선택) -->
+          <div class="form-section">
+            <label class="form-label">회사 홈페이지 <span class="optional">선택사항</span></label>
+            <input type="url" class="form-input" id="company-url" placeholder="https://www.company.com" />
+          </div>
+
+          <button class="btn-primary btn-full" onclick="Analysis.run()" id="btn-analyze">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 0 12 0A6 6 0 0 0 2 8z" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            분석 시작
+          </button>
+
+          <!-- 이전 분석 기록 -->
+          <div class="history-section">
+            <h3 class="history-title">분석 기록</h3>
+            <div class="history-list" id="history-list">
+              <p class="history-empty">아직 분석 기록이 없어요</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 분석 결과 -->
+        <div class="panel result-panel" id="analysis-result-panel">
+          <div class="result-empty" id="analysis-result-empty">
+            <div class="result-empty-icon">◈</div>
+            <p>분석 결과가 여기에 표시돼요</p>
+            <span>왼쪽에서 정보를 입력하고 분석을 시작하세요</span>
+          </div>
+          <div class="result-content hidden" id="analysis-result-content">
+            <!-- 분석 결과 -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== 서류 등록 모달 ===== -->
+  <div class="modal-overlay hidden" id="modal-overlay" onclick="DocumentModal.close(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>서류 등록</h3>
+        <button class="modal-close" onclick="DocumentModal.close()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- 서류 유형 -->
+        <div class="form-section">
+          <label class="form-label required">서류 유형</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="doc-type" value="resume" checked />
+              <span>이력서</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="doc-type" value="portfolio" />
+              <span>포트폴리오</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 타이틀 -->
+        <div class="form-section">
+          <label class="form-label required">서류 타이틀</label>
+          <input type="text" class="form-input" id="modal-title" placeholder="예: 2025 상반기 이력서 v1" />
+        </div>
+
+        <!-- 파일 업로드 -->
+        <div class="form-section">
+          <label class="form-label required">PDF 파일</label>
+          <div class="file-drop" id="file-drop" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" accept=".pdf" hidden onchange="DocumentModal.handleFile(event)" />
+            <div class="file-drop-inner" id="file-drop-inner">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 4v16M8 12l8-8 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 24h24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <p>클릭하거나 파일을 드래그해서 올려주세요</p>
+              <span>PDF만 가능 · 최대 10MB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 지원 정보 -->
+        <div class="form-section">
+          <label class="form-label required">지원 희망 직무</label>
+          <input type="text" class="form-input" id="modal-role" placeholder="예: 프로덕트 매니저, UX 디자이너" />
+        </div>
+        <div class="form-section">
+          <label class="form-label required">지원 희망 분야(도메인)</label>
+          <input type="text" class="form-input" id="modal-domain" placeholder="예: 핀테크, 커머스, B2B SaaS" />
+        </div>
+        <div class="form-section">
+          <label class="form-label">지원 희망 회사 예시 <span class="optional">선택사항</span></label>
+          <input type="text" class="form-input" id="modal-companies" placeholder="예: 토스, 카카오, 네이버" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="DocumentModal.close()">취소</button>
+        <button class="btn-primary" onclick="DocumentModal.submit()">등록 및 분석 시작</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 로딩 오버레이 -->
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <p id="loading-text">AI가 서류를 분석하고 있어요...</p>
+    </div>
+  </div>
+
+  <!-- 토스트 -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/documents.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
