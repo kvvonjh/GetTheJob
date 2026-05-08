@@ -17,19 +17,21 @@ const Documents = {
 
   async renderList() {
     const listEl = document.getElementById('doc-list');
-    const emptyEl = document.getElementById('doc-empty');
 
     try {
       const docs = await DocDB.list(currentDocTab);
 
       if (docs.length === 0) {
-        listEl.innerHTML = '';
-        listEl.appendChild(emptyEl);
-        emptyEl.classList.remove('hidden');
+        const icon = currentDocTab === 'resume' ? '📋' : '💼';
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">${icon}</div>
+            <p>등록된 ${currentDocTab === 'resume' ? '이력서' : '포트폴리오'}가 없어요</p>
+            <span>위 버튼을 눌러 서류를 등록해보세요</span>
+          </div>`;
         return;
       }
 
-      emptyEl.classList.add('hidden');
       listEl.innerHTML = '';
 
       docs.forEach(doc => {
