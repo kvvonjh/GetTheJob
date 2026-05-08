@@ -327,73 +327,25 @@ const DocumentModal = {
   }
 };
 
-// ===== AI 분석 (Gemini API) =====
+// ===== AI 분석 (Supabase Edge Function 경유) =====
 const AI = {
   async analyzeDocument(doc, pdfBase64) {
-    const prompt = `당신은 취업 전문가입니다. 지원자의 서류(이력서/포트폴리오)를 분석하여 구체적이고 실질적인 피드백을 제공하세요.
-
-[분석 대상 서류 정보]
-- 서류 유형: ${doc.type === 'resume' ? '이력서' : '포트폴리오'}
-- 지원 직무: ${doc.target_role}
-- 지원 도메인: ${doc.target_domain}
-${doc.target_companies ? `- 희망 회사: ${doc.target_companies}` : ''}
-
-첨부된 PDF를 꼼꼼히 읽고 항목별로 구체적인 피드백을 제공해주세요.
-
-응답은 반드시 아래 JSON 형식으로만 작성하세요. JSON 외 다른 텍스트나 마크다운 코드블록은 절대 포함하지 마세요.
-{
-  "title": "서류 제목",
-  "role": "지원 직무",
-  "domain": "지원 도메인",
-  "sections": [
-    {
-      "title": "섹션명",
-      "items": [
-        {
-          "label": "항목명",
-          "level": "good | improve | critical",
-          "text": "구체적인 피드백 내용"
-        }
-      ]
-    }
-  ]
-}
-
-level 기준:
-- good: 잘 작성된 부분
-- improve: 개선하면 더 좋을 부분
-- critical: 반드시 수정이 필요한 부분
-
-섹션은 반드시 다음 5가지를 포함하세요: 전반적 완성도, 경력/경험 기술, 핵심 역량 표현, 직무 적합성, 개선 제안`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { inline_data: { mime_type: 'application/pdf', data: pdfBase64 } },
-              { text: prompt }
-            ]
-          }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            maxOutputTokens: 3000
-          }
-        })
-      }
-    );
+    const response = await fetch(`${EDGE_FUNCTION_URL}/analyze-document`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ doc, pdfBase64 })
+    });
 
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error?.message || 'AI 분석 실패');
+      throw new Error(err.error || 'AI 분석 실패');
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
+    if (data.error) throw new Error(data.error);
+    return data.feedback;
   }
 };
