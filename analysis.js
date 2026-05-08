@@ -112,78 +112,23 @@ const Analysis = {
   },
 
   async runAI({ doc, docAnalysis, resumeBase64, postingContent, companyContent }) {
-    const previousFeedback = docAnalysis
-      ? `\n\n이전 서류 분석 결과 요약:\n${JSON.stringify(docAnalysis.feedback?.sections?.map(s => s.items.map(i => i.label + ': ' + i.text).join(' | ')))}`
-      : '';
-
-    const prompt = `당신은 채용 전문가입니다. 지원자의 이력서와 채용 공고를 비교 분석하여 합격 가능성과 fit을 평가하세요.
-
-[지원자 정보]
-- 직무: ${doc.target_role}
-- 도메인: ${doc.target_domain}
-${doc.target_companies ? `- 희망 회사: ${doc.target_companies}` : ''}
-${previousFeedback}
-
-[채용 공고 내용]
-${postingContent.slice(0, 5000)}
-
-${companyContent ? `[회사 정보]\n${companyContent.slice(0, 2000)}` : ''}
-
-첨부된 이력서 PDF와 위 채용 공고를 꼼꼼히 비교 분석하여 카테고리별 점수와 최종 제안을 제공해주세요.
-
-응답은 반드시 아래 JSON 형식으로만 작성하세요. JSON 외 다른 텍스트나 마크다운 코드블록은 절대 포함하지 마세요.
-{
-  "company_name": "회사명",
-  "position_name": "포지션명",
-  "fit_scores": [
-    {
-      "category": "카테고리명",
-      "score": 1~5 숫자,
-      "comment": "평가 이유 (2~3문장)"
-    }
-  ],
-  "final_recommendation": "최종 제안 (지원 우선순위, 추천 여부, fit이 약한 경우 보완 방법 등을 2~4문장으로)"
-}
-
-반드시 아래 6개 카테고리를 모두 포함하세요:
-1. 직무 역량 적합성
-2. 경력/경험 적합성
-3. 도메인/산업 이해도
-4. 핵심 스킬 매칭
-5. 문화/팀 적합성
-6. 성장 가능성
-
-점수 기준: 1(매우 낮음) 2(낮음) 3(보통) 4(높음) 5(매우 높음)`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { inline_data: { mime_type: 'application/pdf', data: resumeBase64 } },
-              { text: prompt }
-            ]
-          }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            maxOutputTokens: 2000
-          }
-        })
-      }
-    );
+    const response = await fetch(`${EDGE_FUNCTION_URL}/analyze-posting`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ doc, docAnalysis, resumeBase64, postingContent, companyContent })
+    });
 
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error?.message || 'AI 분석 실패');
+      throw new Error(err.error || 'AI 분석 실패');
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
+    if (data.error) throw new Error(data.error);
+    return data.result;
   },
 
   renderResult(result, createdAt) {
