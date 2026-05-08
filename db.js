@@ -64,7 +64,9 @@ const DocDB = {
 
   async uploadFile(file, docId) {
     const token = Session.getToken();
-    const filePath = `${token}/${docId}/${file.name}`;
+    // 한글/특수문자 제거 — Supabase Storage는 ASCII 경로만 허용
+    const safeFileName = `${Date.now()}.pdf`;
+    const filePath = `${token}/${docId}/${safeFileName}`;
     const { error } = await db.storage
       .from('job-documents')
       .upload(filePath, file, { contentType: 'application/pdf' });
