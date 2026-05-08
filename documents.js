@@ -317,6 +317,7 @@ const DocumentModal = {
       await Documents.renderList();
       await Documents.refreshAnalysisSelect();
       Documents.renderResult(feedback, new Date().toISOString());
+      App.updateStep2Nav();
       Toast.show('서류 등록 및 분석 완료!', 'success');
 
     } catch (e) {
